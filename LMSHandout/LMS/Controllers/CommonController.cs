@@ -95,16 +95,28 @@ namespace LMS.Controllers
         /// Use "return Content(...)" to return plain text.
         /// Returns the contents of an assignment.
         /// </summary>
-        /// <param name="subject">The course subject abbreviation</param>
-        /// <param name="num">The course number</param>
-        /// <param name="season">The season part of the semester for the class the assignment belongs to</param>
-        /// <param name="year">The year part of the semester for the class the assignment belongs to</param>
-        /// <param name="category">The name of the assignment category in the class</param>
-        /// <param name="asgname">The name of the assignment in the category</param>
+        /// <param name="subject">The course subject abbreviation</param> // Courses
+        /// <param name="num">The course number</param> // Courses
+        /// <param name="season">The season part of the semester for the class the assignment belongs to</param> // Classes
+        /// <param name="year">The year part of the semester for the class the assignment belongs to</param> // Classes
+        /// <param name="category">The name of the assignment category in the class</param> // AssCat
+        /// <param name="asgname">The name of the assignment in the category</param> //Assignments
         /// <returns>The assignment contents</returns>
         public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
         {            
-            return Content("");
+
+            var query = from c in db.Classes
+                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
+                            from x in ccr.DefaultIfEmpty()
+                            join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
+                            from y in xac.DefaultIfEmpty()
+                            join a in db.Assignments on y.AcId equals a.AcId into ya
+                            from z in ya.DefaultIfEmpty()
+                            where x.Department == subject && x.CNum == num && c.Semester == season && c.Year == year && y.CatName == category && z.AName == asgname
+                            select new {content = z.Instructions};
+
+
+            return Content(query.ToString());
         }
 
 
