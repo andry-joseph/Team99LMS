@@ -30,7 +30,12 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetDepartments()
         {            
-            return Json(null);
+
+            var query = from dep in db.Departments
+                                         select new {name = dep.DName, subject = dep.Abbreviation};
+
+
+            return Json(query.ToArray());
         }
 
 
@@ -48,7 +53,13 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetCatalog()
         {            
-            return Json(null);
+            var query = from c in db.Courses
+                            join d in db.Departments on c.Department equals d.Abbreviation into cd
+                            from z in cd.DefaultIfEmpty()
+                            select new {subject = z.Abbreviation, dname = z.DName, cname = c.CName, number = c.CNum};
+
+
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -67,7 +78,16 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetClassOfferings(string subject, int number)
         {            
-            return Json(null);
+            var query = from c in db.Classes
+                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
+                            from x in ccr.DefaultIfEmpty()
+                            join p in db.Professors on c.Professor equals p.UId into xp
+                            from y in xp.DefaultIfEmpty()
+                            where x.Department == subject && x.CNum == number
+                            select new {season = c.Semester, year = c.Year, location = c.Location, start = c.StartTime, end = c.EndTime, fname = y.FirstName, lname = y.LastName};
+
+
+            return Json(query.ToArray());
         }
 
         /// <summary>
