@@ -126,17 +126,30 @@ namespace LMS.Controllers
         /// Returns the contents of an assignment submission.
         /// Returns the empty string ("") if there is no submission.
         /// </summary>
-        /// <param name="subject">The course subject abbreviation</param>
-        /// <param name="num">The course number</param>
-        /// <param name="season">The season part of the semester for the class the assignment belongs to</param>
-        /// <param name="year">The year part of the semester for the class the assignment belongs to</param>
-        /// <param name="category">The name of the assignment category in the class</param>
-        /// <param name="asgname">The name of the assignment in the category</param>
-        /// <param name="uid">The uid of the student who submitted it</param>
+        /// <param name="subject">The course subject abbreviation</param> \\ Courses
+        /// <param name="num">The course number</param> \\Courses
+        /// <param name="season">The season part of the semester for the class the assignment belongs to</param> \\Classes
+        /// <param name="year">The year part of the semester for the class the assignment belongs to</param> \\Classes
+        /// <param name="category">The name of the assignment category in the class</param> \\AssCat
+        /// <param name="asgname">The name of the assignment in the category</param> \\Assignments
+        /// <param name="uid">The uid of the student who submitted it</param> \\ Submission
         /// <returns>The submission text</returns>
         public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
         {            
-            return Content("");
+            var query = from c in db.Classes
+                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
+                            from x in ccr.DefaultIfEmpty()
+                            join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
+                            from y in xac.DefaultIfEmpty()
+                            join a in db.Assignments on y.AcId equals a.AcId into ya
+                            from z in ya.DefaultIfEmpty()
+                            join s in db.Submissions on  z.AId equals s.AId into sz
+                            from w in sz.DefaultIfEmpty()
+                            where x.Department == subject && x.CNum == num && c.Semester == season && c.Year == year && y.CatName == category && z.AName == asgname && w.Student == uid
+                            select new {content = w.StudentSolution};
+
+
+            return Content(query.ToString());
         }
 
 
@@ -157,7 +170,18 @@ namespace LMS.Controllers
         /// or an object containing {success: false} if the user doesn't exist
         /// </returns>
         public IActionResult GetUser(string uid)
-        {           
+        {     
+             var query = from students in db.Students 
+                            join p in db.Professors on students.UId equals p.UId into ps
+                            from profStu in ps.DefaultIfEmpty()
+                            join a in db.Administrators on profStu.UId equals a.UId into psa
+                            from people in psa.DefaultIfEmpty()
+                            join d1 in db.Departments on students.Major equals d1.Abbreviation into dept1 
+                            from dept2 in dept1.DefaultIfEmpty()
+                            join d2 in db.Departments on profStu.Department equals d2.Abbreviation into dept3
+                            from dept in dept3.DefaultIfEmpty()
+                            select new {fname =  people.FirstName, lname = people.LastName, uid = people.UId, department = dept.DName == null ? "" : dept.DName};
+
             return Json(new { success = false });
         }
 
