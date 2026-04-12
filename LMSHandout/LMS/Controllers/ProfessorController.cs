@@ -118,7 +118,19 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetStudentsInClass(string subject, int num, string season, int year)
         {
-            return Json(null);
+
+            var query = from c in db.Classes
+                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
+                            from x in ccr.DefaultIfEmpty()
+                            join e in db.Enrollments on c.CId equals e.CId into ec
+                            from enroll in ec.DefaultIfEmpty()
+                            join s in db.Students on enroll.Student equals s.UId into senroll
+                            from student in senroll.DefaultIfEmpty()
+                            where x.Department == subject && x.CNum == num && c.Semester == season && c.Year == year
+                            select new {fname = student.FirstName, lname = student.LastName, uid = student.UId, dob = student.Dob, grade = enroll.Grade};
+
+
+            return Json(query.ToArray());
         }
 
 
@@ -141,6 +153,21 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentsInCategory(string subject, int num, string season, int year, string category)
         {
+
+            var query = from c in db.Classes
+                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
+                            from x in ccr.DefaultIfEmpty()
+                            join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
+                            from assignCat in xac.DefaultIfEmpty()
+                            join a in db.Assignments on assignCat.AcId equals a.AcId into assigna
+                            from assignment in assigna.DefaultIfEmpty()
+                            where x.Department == subject 
+                            && x.CNum == num 
+                            && c.Semester == season
+                            && c.Year == year 
+                            && (category == null || assignCat.CatName == category)
+                            select new {aname = assignment.AName, cname = assignCat.CatName, due = assignment.DueDate, submissions = assignment.Submissions};
+
             return Json(null);
         }
 
