@@ -1,5 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+using static int;
 using static System.Console;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 #nullable disable
@@ -197,6 +198,18 @@ namespace LMS.Areas.Identity.Pages.Account
         /// <returns>The uID of the new user</returns>
         string CreateNewUser( string firstName, string lastName, DateTime DOB, string departmentAbbrev, string role )
         {
+            //Getting the latest uID count from the database to ensure unique uIDs across users
+            string latestprofuIDCount = db.Professors.OrderByDescending( p => p.UId ).Select( p => p.UId ).FirstOrDefault();
+            string lateststuIDCount = db.Students.OrderByDescending( s => s.UId ).Select( s => s.UId ).FirstOrDefault();
+            string latestadmuIDCount = db.Administrators.OrderByDescending( a => a.UId ).Select( a => a.UId ).FirstOrDefault();
+
+            int profUid = int.Parse(latestprofuIDCount.Substring(1, 7));
+            int stuUid = int.Parse(lateststuIDCount.Substring(1, 7));
+            int admUid = int.Parse(latestadmuIDCount.Substring(1, 7));
+
+            uIDCount = int.Max(profUid, stuUid);
+            uIDCount = int.Max(uIDCount, admUid);
+
             if (role == "Professor")
             {
                 Professor p = new Professor();
