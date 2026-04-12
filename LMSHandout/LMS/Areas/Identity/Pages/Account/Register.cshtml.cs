@@ -1,5 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+using static System.Console;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 #nullable disable
 
@@ -35,7 +36,7 @@ namespace LMS.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly LMSContext db;
         //private readonly IEmailSender _emailSender;
-        private int uIDCount = 1000000;
+        private static int uIDCount;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
@@ -232,7 +233,7 @@ namespace LMS.Areas.Identity.Pages.Account
             }
             
             string curruID = "u" + uIDCount.ToString();
-            uIDCount++;
+            uIDCount = uIDCount + 1;
             return curruID;
         }
 
