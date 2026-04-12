@@ -1,6 +1,5 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-using static int;
 using static System.Console;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 #nullable disable
@@ -37,7 +36,7 @@ namespace LMS.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly LMSContext db;
         //private readonly IEmailSender _emailSender;
-        private static int uIDCount;
+        private static int uIDCount = 0;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
@@ -199,9 +198,22 @@ namespace LMS.Areas.Identity.Pages.Account
         string CreateNewUser( string firstName, string lastName, DateTime DOB, string departmentAbbrev, string role )
         {
             //Getting the latest uID count from the database to ensure unique uIDs across users
-            string latestprofuIDCount = db.Professors.OrderByDescending( p => p.UId ).Select( p => p.UId ).FirstOrDefault();
-            string lateststuIDCount = db.Students.OrderByDescending( s => s.UId ).Select( s => s.UId ).FirstOrDefault();
-            string latestadmuIDCount = db.Administrators.OrderByDescending( a => a.UId ).Select( a => a.UId ).FirstOrDefault();
+            string latestprofuIDCount = "u0000000";
+            string lateststuIDCount = "u0000000";
+            string latestadmuIDCount = "u0000000";
+
+            if (db.Professors.Count() != 0) // Tells us its empty
+            {
+                latestprofuIDCount = db.Professors.OrderBy(p => p.UId).Select( p => p.UId ).Last();
+            }
+            if (db.Students.Count() != 0) // Tells us its empty
+            {
+                lateststuIDCount = db.Students.OrderBy(s => s.UId).Select( s => s.UId ).Last();
+            }
+            if (db.Administrators.Count() != 0) // Tells us its empty
+            {
+                latestadmuIDCount = db.Administrators.OrderBy(a => a.UId).Select( a => a.UId ).Last();
+            }
 
             int profUid = int.Parse(latestprofuIDCount.Substring(1, 7));
             int stuUid = int.Parse(lateststuIDCount.Substring(1, 7));
@@ -210,10 +222,15 @@ namespace LMS.Areas.Identity.Pages.Account
             uIDCount = int.Max(profUid, stuUid);
             uIDCount = int.Max(uIDCount, admUid);
 
+            uIDCount++;
+            int padding = 8 - uIDCount.ToString().Length;
+
+
             if (role == "Professor")
             {
                 Professor p = new Professor();
-                p.UId = "u" + uIDCount.ToString();
+                string uID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+                p.UId = uID;
                 p.FirstName = firstName;
                 p.LastName = lastName;
                 p.Dob = DateOnly.FromDateTime(DOB);
@@ -225,7 +242,8 @@ namespace LMS.Areas.Identity.Pages.Account
             if (role == "Student")
             {
                 Student s = new Student();
-                s.UId = "u" + uIDCount.ToString();
+                string uID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+                s.UId = uID;
                 s.FirstName = firstName;
                 s.LastName = lastName;
                 s.Dob = DateOnly.FromDateTime(DOB);
@@ -237,7 +255,8 @@ namespace LMS.Areas.Identity.Pages.Account
             if (role == "Administrator")
             {
                 Administrator a = new Administrator();
-                a.UId = "u" + uIDCount.ToString();
+                string uID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+                a.UId = uID;
                 a.FirstName = firstName;
                 a.LastName = lastName;
                 a.Dob = DateOnly.FromDateTime(DOB);
@@ -245,8 +264,7 @@ namespace LMS.Areas.Identity.Pages.Account
                 db.SaveChanges();
             }
             
-            string curruID = "u" + uIDCount.ToString();
-            uIDCount = uIDCount + 1;
+            string curruID = "u" + uIDCount.ToString().PadLeft(padding, '0');
             return curruID;
         }
 
