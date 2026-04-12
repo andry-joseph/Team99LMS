@@ -1,5 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
+using static System.Runtime.InteropServices.JavaScript.JSType;
 #nullable disable
 
 using System;
@@ -34,6 +35,7 @@ namespace LMS.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly LMSContext db;
         //private readonly IEmailSender _emailSender;
+        private int uIDCount = 1000000;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
@@ -194,8 +196,44 @@ namespace LMS.Areas.Identity.Pages.Account
         /// <returns>The uID of the new user</returns>
         string CreateNewUser( string firstName, string lastName, DateTime DOB, string departmentAbbrev, string role )
         {
+            if (role == "Professor")
+            {
+                Professor p = new Professor();
+                p.UId = "u" + uIDCount.ToString();
+                p.FirstName = firstName;
+                p.LastName = lastName;
+                p.Dob = DateOnly.FromDateTime(DOB);
+                p.Department = departmentAbbrev;
+                db.Professors.Add(p);
+                db.SaveChanges();
+            }
+
+            if (role == "Student")
+            {
+                Student s = new Student();
+                s.UId = "u" + uIDCount.ToString();
+                s.FirstName = firstName;
+                s.LastName = lastName;
+                s.Dob = DateOnly.FromDateTime(DOB);
+                s.Major = departmentAbbrev;
+                db.Students.Add(s);
+                db.SaveChanges();
+            }
+
+            if (role == "Administrator")
+            {
+                Administrator a = new Administrator();
+                a.UId = "u" + uIDCount.ToString();
+                a.FirstName = firstName;
+                a.LastName = lastName;
+                a.Dob = DateOnly.FromDateTime(DOB);
+                db.Administrators.Add(a);
+                db.SaveChanges();
+            }
             
-            return "unknown";
+            string curruID = "u" + uIDCount.ToString();
+            uIDCount++;
+            return curruID;
         }
 
         /*******End code to modify********/
