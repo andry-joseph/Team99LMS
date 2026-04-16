@@ -64,8 +64,6 @@ namespace LMS.Controllers
             {
                 return Json(new { success = false});
             }
-
-
         }
 
 
@@ -79,8 +77,12 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetCourses(string subject)
         {
-            
-            return Json(null);
+            var query = from c in db.Courses
+                        where c.Department == subject
+                        select new {number = c.CNum, name = c.CName};
+
+
+            return Json(query.ToArray());
         }
 
         /// <summary>
@@ -94,9 +96,11 @@ namespace LMS.Controllers
         /// <returns>The JSON result</returns>
         public IActionResult GetProfessors(string subject)
         {
-            
-            return Json(null);
-            
+            var query = from p in db.Professors
+                        where p.Department == subject
+                        select new {lname = p.LastName, fname = p.FirstName, uid = p.UId};
+
+            return Json(query.ToArray());
         }
 
 
@@ -112,7 +116,21 @@ namespace LMS.Controllers
         /// false if the course already exists, true otherwise.</returns>
         public IActionResult CreateCourse(string subject, int number, string name)
         {           
-            return Json(new { success = false });
+            try
+            {
+                Course c = new Course();
+                c.CNum = (uint) number;
+                c.CName = name;
+                c.Department = subject;
+                db.Courses.Add(c);
+                db.SaveChanges();
+
+                return Json(new { success = true});
+            }
+            catch
+            {
+                return Json(new { success = false});
+            }
         }
 
 
@@ -135,7 +153,25 @@ namespace LMS.Controllers
         /// true otherwise.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
         {            
-            return Json(new { success = false});
+            try
+            {
+                Class c = new Class();
+                c.Semester = season;
+                c.Year = (uint) year;
+                c.CrId = (uint)number;
+                c.Professor = instructor;
+                c.Location = location;
+                c.StartTime = TimeOnly.FromDateTime(start);
+                c.EndTime = TimeOnly.FromDateTime(end);
+                db.Classes.Add(c);
+                db.SaveChanges();
+                
+                return Json(new { success = true});
+            }
+            catch
+            {
+                return Json(new { success = false});
+            }
         }
 
 
