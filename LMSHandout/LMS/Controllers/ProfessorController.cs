@@ -156,17 +156,14 @@ namespace LMS_CustomIdentity.Controllers
         {
 
             var query = from c in db.Classes
-                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
-                            from x in ccr.DefaultIfEmpty()
-                            join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
-                            from assignCat in xac.DefaultIfEmpty()
-                            join a in db.Assignments on assignCat.AcId equals a.AcId into assigna
-                            from assignment in assigna.DefaultIfEmpty()
-                            where x.Department == subject 
-                            && x.CNum == num 
+                            join course in db.Courses on c.CrId equals course.CrId
+                            join assignCat in db.AssignmentCategories on c.CId equals assignCat.CId
+                            join assignment in db.Assignments on assignCat.AcId equals assignment.AcId
+                            where course.Department == subject 
+                            && course.CNum == num 
                             && c.Semester == season
                             && c.Year == year 
-                            && (category == null || assignCat.CatName == category)
+                            && (string.IsNullOrWhiteSpace(category) || assignCat.CatName == category)
                             select new {aname = assignment.AName, cname = assignCat.CatName, due = assignment.DueDate, submissions = assignment.Submissions.Count()};
 
             return Json(query.ToArray());
@@ -275,13 +272,21 @@ namespace LMS_CustomIdentity.Controllers
                             && c.Semester == season
                             && c.Year == year 
                             && assignCat.CatName == category
-                            select new {acid = assignCat.AcId};
+                            select new {acid = assignCat.AcId, cid = assignCat.CId};
 
             int aCID = 0;
+            uint cID = 0;
             foreach(var v in query)
             {
                 aCID = v.acid;
+                cID = v.cid;
             }
+
+            if (aCID == 0 || cID == 0)
+            {
+                return Json(new { success = false });
+            }
+
             try
             {
                 Assignment assignm = new Assignment();
@@ -291,6 +296,13 @@ namespace LMS_CustomIdentity.Controllers
                 assignm.Instructions = asgcontents;
                 assignm.MaxPoints = (uint) asgpoints;
                 db.Assignments.Add(assignm);
+                db.SaveChanges();
+
+                foreach (var studentUid in db.Enrollments.Where(e => e.CId == cID).Select(e => e.Student).ToList())
+                {
+                    UpdateStudentGrade(cID, studentUid);
+                }
+
                 db.SaveChanges();
                 return Json(new { success = true });
 
@@ -330,10 +342,8 @@ namespace LMS_CustomIdentity.Controllers
                             from assignCat in xac.DefaultIfEmpty()
                             join a in db.Assignments on assignCat.AcId equals a.AcId into aasignCat
                             from assignment in aasignCat.DefaultIfEmpty()
-                            join s in db.Submissions on assignment.AId equals s.AId into sassign
-                            from submission in sassign.DefaultIfEmpty()
-                            join stu in db.Students on submission.Student equals stu.UId into sstu
-                            from student in sstu.DefaultIfEmpty()
+                            join submission in db.Submissions on assignment.AId equals submission.AId
+                            join student in db.Students on submission.Student equals student.UId
                             where x.Department == subject 
                             && x.CNum == num 
                             && c.Semester == season
@@ -360,40 +370,34 @@ namespace LMS_CustomIdentity.Controllers
         /// <returns>A JSON object containing success = true/false</returns>
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
         {
+            var target = ( from c in db.Classes
+                           join course in db.Courses on c.CrId equals course.CrId
+                           join assignCat in db.AssignmentCategories on c.CId equals assignCat.CId
+                           join assignment in db.Assignments on assignCat.AcId equals assignment.AcId
+                           where course.Department == subject
+                           && course.CNum == num
+                           && c.Semester == season
+                           && c.Year == year
+                           && assignCat.CatName == category
+                           && assignment.AName == asgname
+                           select new { c.CId, assignment.AId } ).FirstOrDefault();
 
-            var query = from c in db.Classes
-                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
-                            from x in ccr.DefaultIfEmpty()
-                            join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
-                            from assignCat in xac.DefaultIfEmpty()
-                            join a in db.Assignments on assignCat.AcId equals a.AcId into aasignCat
-                            from assignment in aasignCat.DefaultIfEmpty()
-                            join s in db.Submissions on assignment.AId equals s.AId into sassign
-                            from submission in sassign.DefaultIfEmpty()
-                            join stu in db.Students on submission.Student equals stu.UId into sstu
-                            from student in sstu.DefaultIfEmpty()
-                            where x.Department == subject 
-                            && x.CNum == num 
-                            && c.Semester == season
-                            && c.Year == year 
-                            && assignCat.CatName == category
-                            && assignment.AName == asgname
-                            && student.UId == uid
-                            select new {aid = submission.AId, stuID = submission.Student};
-            
-            uint AID = 0;
-            string uID = "";
-            foreach(var v in query)
+            if (target == null)
             {
-                AID = v.aid;
-                uID = v.stuID;
+                return Json(new { success = false });
             }
 
             try
             {
-                Submission s = db.Submissions.FirstOrDefault(x => x.AId == AID && x.Student == uID);
-                
-                s.Score = (uint) score;
+                var submission = db.Submissions.FirstOrDefault(s => s.AId == target.AId && s.Student == uid);
+
+                if (submission == null)
+                {
+                    return Json(new { success = false });
+                }
+
+                submission.Score = (uint) score;
+                UpdateStudentGrade(target.CId, uid);
 
                 db.SaveChanges();
                 return Json(new { success = true });
@@ -403,10 +407,6 @@ namespace LMS_CustomIdentity.Controllers
                 return Json(new { success = false });
 
             }
-
-
-
-
         }
 
 
@@ -434,7 +434,82 @@ namespace LMS_CustomIdentity.Controllers
                         
             return Json(query.ToArray());
         }
-     
+
+        private void UpdateStudentGrade(uint cId, string uid)
+        {
+            var enrollment = (from e in db.Enrollments
+                              where e.CId == cId
+                              && e.Student == uid
+                              select e).FirstOrDefault();
+
+            if (enrollment == null)
+            {
+                return;
+            }
+
+            var categories = (from ac in db.AssignmentCategories
+                              where ac.CId == cId
+                              select new { ac.AcId, Weight = (double)ac.GrdWeight }).ToList();
+
+            double scaledTotal = 0.0;
+            double totalWeight = 0.0;
+
+            foreach (var category in categories)
+            {
+                var assignments = (from a in db.Assignments
+                                   where a.AcId == category.AcId
+                                   select new { a.AId, MaxPoints = (double)a.MaxPoints }).ToList();
+
+                if (assignments.Count == 0)
+                {
+                    continue;
+                }
+
+                var assignmentIds = assignments.Select(a => a.AId).ToList();
+                var scores = (from s in db.Submissions
+                              where s.Student == uid
+                              && assignmentIds.Contains(s.AId)
+                              select s)
+                             .ToDictionary(s => s.AId, s => s.Score.HasValue ? (double)s.Score.Value : 0.0);
+
+                var earnedPoints = assignments.Sum(a => scores.TryGetValue(a.AId, out var earned) ? earned : 0.0);
+                var maxPoints = assignments.Sum(a => a.MaxPoints);
+
+                if (maxPoints == 0)
+                {
+                    continue;
+                }
+
+                scaledTotal += (earnedPoints / maxPoints) * category.Weight;
+                totalWeight += category.Weight;
+            }
+
+            if (totalWeight == 0)
+            {
+                enrollment.Grade = "--";
+                return;
+            }
+
+            var classPercentage = scaledTotal * (100.0 / totalWeight);
+            enrollment.Grade = LetterGradeFromPercentage(classPercentage);
+        }
+
+        private static string LetterGradeFromPercentage(double percentage)
+        {
+            if (percentage >= 93.0) return "A";
+            if (percentage >= 90.0) return "A-";
+            if (percentage >= 87.0) return "B+";
+            if (percentage >= 83.0) return "B";
+            if (percentage >= 80.0) return "B-";
+            if (percentage >= 77.0) return "C+";
+            if (percentage >= 73.0) return "C";
+            if (percentage >= 70.0) return "C-";
+            if (percentage >= 67.0) return "D+";
+            if (percentage >= 63.0) return "D";
+            if (percentage >= 60.0) return "D-";
+            return "E";
+        }
+
         /*******End code to modify********/
     }
 }

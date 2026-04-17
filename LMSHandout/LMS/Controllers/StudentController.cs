@@ -105,19 +105,25 @@ namespace LMS.Controllers
         public IActionResult GetAssignmentsInClass(string subject, int num, string season, int year, string uid)
         {
             var query = from c in db.Classes
-                        join cr in db.Courses on c.CrId equals cr.CrId into ccr
-                        from x in ccr.DefaultIfEmpty()
-                        join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
-                        from assignCat in xac.DefaultIfEmpty()
-                        join a in db.Assignments on assignCat.AcId equals a.AcId into assigna
-                        from assignment in assigna.DefaultIfEmpty()
-                        join s in db.Submissions.Where(s => s.Student == uid) on assignment.AId equals s.AId into assigns
-                        from sub in assigns.DefaultIfEmpty()
-                        where x.Department == subject
-                        && x.CNum == num
+                        join course in db.Courses on c.CrId equals course.CrId
+                        join enroll in db.Enrollments on c.CId equals enroll.CId
+                        join assignCat in db.AssignmentCategories on c.CId equals assignCat.CId
+                        join assignment in db.Assignments on assignCat.AcId equals assignment.AcId
+                        where course.Department == subject
+                        && course.CNum == num
                         && c.Semester == season
                         && c.Year == year
-                        select new { aname = assignment.AName, cname = assignCat.CatName, due = assignment.DueDate, score = sub.Score };
+                        && enroll.Student == uid
+                        select new
+                        {
+                            aname = assignment.AName,
+                            cname = assignCat.CatName,
+                            due = assignment.DueDate,
+                            score = db.Submissions
+                                .Where(s => s.Student == uid && s.AId == assignment.AId)
+                                .Select(s => s.Score)
+                                .FirstOrDefault()
+                        };
 
             return Json(query.ToArray());
         }
@@ -187,7 +193,6 @@ namespace LMS.Controllers
                     newSub.Student = uid;
                     newSub.Time = DateTime.Now;
                     newSub.StudentSolution = contents;
-                    newSub.Score = 0;
                     db.Submissions.Add(newSub);
                 }
 
@@ -263,7 +268,6 @@ namespace LMS.Controllers
                         where e.Student == uid
                         select new { grade = e.Grade };
 
-            double gpa = 0.0;
             var totalHours = 0;
             double totalGradePoints = 0.0;
 
@@ -271,66 +275,65 @@ namespace LMS.Controllers
             {
                 return Json(new { gpa = 0.0 });
             }
-            else
-            {
-                foreach (var v in query)
-                {
-                    if (v.grade != "--")
-                    {
-                        totalHours += 4;
 
-                        switch (v.grade)
-                        {
-                            case "A":
-                                totalGradePoints += 4.0;
-                                break;
-                            case "A-":
-                                totalGradePoints += 3.7;
-                                break;
-                            case "B+":
-                                totalGradePoints += 3.3;
-                                break;
-                            case "B":
-                                totalGradePoints += 3.0;
-                                break;
-                            case "B-":
-                                totalGradePoints += 2.7;
-                                break;
-                            case "C+":
-                                totalGradePoints += 2.3;
-                                break;
-                            case "C":
-                                totalGradePoints += 2.0;
-                                break;
-                            case "C-":
-                                totalGradePoints += 1.7;
-                                break;
-                            case "D+":
-                                totalGradePoints += 1.3;
-                                break;
-                            case "D":
-                                totalGradePoints += 1.0;
-                                break;
-                            case "D-":
-                                totalGradePoints += 0.7;
-                                break;
-                            case "E":
-                                totalGradePoints += 0.0;
-                                break;
-                        }
+            foreach (var v in query)
+            {
+                if (v.grade != null && v.grade != "--")
+                {
+                    totalHours += 4;
+
+                    switch (v.grade)
+                    {
+                        case "A":
+                            totalGradePoints += 4.0;
+                            break;
+                        case "A-":
+                            totalGradePoints += 3.7;
+                            break;
+                        case "B+":
+                            totalGradePoints += 3.3;
+                            break;
+                        case "B":
+                            totalGradePoints += 3.0;
+                            break;
+                        case "B-":
+                            totalGradePoints += 2.7;
+                            break;
+                        case "C+":
+                            totalGradePoints += 2.3;
+                            break;
+                        case "C":
+                            totalGradePoints += 2.0;
+                            break;
+                        case "C-":
+                            totalGradePoints += 1.7;
+                            break;
+                        case "D+":
+                            totalGradePoints += 1.3;
+                            break;
+                        case "D":
+                            totalGradePoints += 1.0;
+                            break;
+                        case "D-":
+                            totalGradePoints += 0.7;
+                            break;
+                        case "E":
+                            totalGradePoints += 0.0;
+                            break;
                     }
                 }
-
-                totalGradePoints *= 4;
-                gpa = totalGradePoints/totalHours;
             }
 
-            return Json(new { gpa = gpa });
+            if (totalHours == 0)
+            {
+                return Json(new { gpa = 0.0 });
+            }
+
+            totalGradePoints *= 4;
+            return Json(new { gpa = totalGradePoints / totalHours });
         }
 
         /*******End code to modify********/
 
     }
 }
-
-
