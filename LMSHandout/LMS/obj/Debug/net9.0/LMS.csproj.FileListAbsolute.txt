@@ -376,17 +376,3 @@
 /Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.pdb
 /Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.genruntimeconfig.cache
 /Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/ref/LMS.dll
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.csproj.AssemblyReference.cache
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/rpswa.dswa.cache.json
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.GeneratedMSBuildEditorConfig.editorconfig
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.AssemblyInfoInputs.cache
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.AssemblyInfo.cs
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.csproj.CoreCompileInputs.cache
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.MvcApplicationPartsAssemblyInfo.cs
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.MvcApplicationPartsAssemblyInfo.cache
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.RazorAssemblyInfo.cache
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.RazorAssemblyInfo.cs
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.sourcelink.json
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.dll
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/refint/LMS.dll
-c:/Stuff/School/Spring 2026/CS 5530 Database Systems/Team99LMS/LMSHandout/LMS/obj/Debug/net9.0/LMS.pdb

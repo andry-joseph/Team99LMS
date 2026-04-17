@@ -215,21 +215,19 @@ namespace LMS.Areas.Identity.Pages.Account
                 latestadmuIDCount = db.Administrators.OrderBy(a => a.UId).Select( a => a.UId ).Last();
             }
 
-            int profUid = int.Parse(latestprofuIDCount.Substring(1, 7));
-            int stuUid = int.Parse(lateststuIDCount.Substring(1, 7));
-            int admUid = int.Parse(latestadmuIDCount.Substring(1, 7));
+            int profUid = int.Parse(latestprofuIDCount.Replace("u", "0"));
+            int stuUid = int.Parse(lateststuIDCount.Replace("u", "0"));
+            int admUid = int.Parse(latestadmuIDCount.Replace("u", "0"));
 
             uIDCount = int.Max(profUid, stuUid);
             uIDCount = int.Max(uIDCount, admUid);
 
             uIDCount++;
-            int padding = 8 - uIDCount.ToString().Length;
-
 
             if (role == "Professor")
             {
                 Professor p = new Professor();
-                string uID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+                string uID = "u" + uIDCount.ToString().PadLeft(7, '0');
                 p.UId = uID;
                 p.FirstName = firstName;
                 p.LastName = lastName;
@@ -242,7 +240,7 @@ namespace LMS.Areas.Identity.Pages.Account
             if (role == "Student")
             {
                 Student s = new Student();
-                string uID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+                string uID = "u" + uIDCount.ToString().PadLeft(7, '0');
                 s.UId = uID;
                 s.FirstName = firstName;
                 s.LastName = lastName;
@@ -255,7 +253,7 @@ namespace LMS.Areas.Identity.Pages.Account
             if (role == "Administrator")
             {
                 Administrator a = new Administrator();
-                string uID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+                string uID = "u" + uIDCount.ToString().PadLeft(7, '0');
                 a.UId = uID;
                 a.FirstName = firstName;
                 a.LastName = lastName;
@@ -263,8 +261,8 @@ namespace LMS.Areas.Identity.Pages.Account
                 db.Administrators.Add(a);
                 db.SaveChanges();
             }
-            
-            string curruID = "u" + uIDCount.ToString().PadLeft(padding, '0');
+
+            string curruID = "u" + uIDCount.ToString().PadLeft(7, '0');
             return curruID;
         }
 
