@@ -167,7 +167,7 @@ namespace LMS_CustomIdentity.Controllers
                             && c.Semester == season
                             && c.Year == year 
                             && (category == null || assignCat.CatName == category)
-                            select new {aname = assignment.AName, cname = assignCat.CatName, due = assignment.DueDate, submissions = assignment.Submissions};
+                            select new {aname = assignment.AName, cname = assignCat.CatName, due = assignment.DueDate, submissions = assignment.Submissions.Count()};
 
             return Json(query.ToArray());
         }
@@ -438,4 +438,3 @@ namespace LMS_CustomIdentity.Controllers
         /*******End code to modify********/
     }
 }
-

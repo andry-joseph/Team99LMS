@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using LMS.Models.LMSModels;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Converters;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 [assembly: InternalsVisibleTo( "LMSControllerTests" )]
@@ -116,6 +117,15 @@ namespace LMS.Controllers
         /// false if the course already exists, true otherwise.</returns>
         public IActionResult CreateCourse(string subject, int number, string name)
         {           
+            var courseExists = db.Courses.Any(c =>
+                c.Department == subject &&
+                c.CNum == (uint)number);
+
+            if (courseExists)
+            {
+                return Json(new { success = false });
+            }
+
             try
             {
                 Course c = new Course();
@@ -152,25 +162,65 @@ namespace LMS.Controllers
         /// a Class offering of the same Course in the same Semester,
         /// true otherwise.</returns>
         public IActionResult CreateClass(string subject, int number, string season, int year, DateTime start, DateTime end, string location, string instructor)
-        {            
+        {
+            var crID = db.Courses
+                .Where(c => c.Department == subject && c.CNum == number)
+                .Select(c => (uint?)c.CrId)
+                .FirstOrDefault();
+
+            if (crID == null)
+            {
+                return Json(new { success = false });
+            }
+
+            var startTime = TimeOnly.FromDateTime(start);
+            var endTime = TimeOnly.FromDateTime(end);
+
+            if (endTime <= startTime)
+            {
+                return Json(new { success = false });
+            }
+
+            var courseAlreadyOffered = db.Classes.Any(c =>
+                c.CrId == crID.Value &&
+                c.Semester == season &&
+                c.Year == (uint)year);
+
+            if (courseAlreadyOffered)
+            {
+                return Json(new { success = false });
+            }
+
+            var locationConflict = db.Classes.Any(c =>
+                c.Semester == season &&
+                c.Year == (uint)year &&
+                c.Location == location &&
+                startTime < c.EndTime &&
+                c.StartTime < endTime);
+
+            if (locationConflict)
+            {
+                return Json(new { success = false });
+            }
+
             try
             {
                 Class c = new Class();
                 c.Semester = season;
-                c.Year = (uint) year;
-                c.CrId = (uint)number;
+                c.Year = (uint)year;
+                c.CrId = crID.Value;
                 c.Professor = instructor;
                 c.Location = location;
-                c.StartTime = TimeOnly.FromDateTime(start);
-                c.EndTime = TimeOnly.FromDateTime(end);
+                c.StartTime = startTime;
+                c.EndTime = endTime;
                 db.Classes.Add(c);
                 db.SaveChanges();
-                
-                return Json(new { success = true});
+
+                return Json(new { success = true });
             }
             catch
             {
-                return Json(new { success = false});
+                return Json(new { success = false });
             }
         }
 
@@ -179,4 +229,3 @@ namespace LMS.Controllers
 
     }
 }
-

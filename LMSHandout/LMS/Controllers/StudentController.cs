@@ -111,13 +111,12 @@ namespace LMS.Controllers
                         from assignCat in xac.DefaultIfEmpty()
                         join a in db.Assignments on assignCat.AcId equals a.AcId into assigna
                         from assignment in assigna.DefaultIfEmpty()
-                        join s in db.Submissions on assignment.AId equals s.AId into assigns
+                        join s in db.Submissions.Where(s => s.Student == uid) on assignment.AId equals s.AId into assigns
                         from sub in assigns.DefaultIfEmpty()
                         where x.Department == subject
                         && x.CNum == num
                         && c.Semester == season
                         && c.Year == year
-                        && sub.Student == uid
                         select new { aname = assignment.AName, cname = assignCat.CatName, due = assignment.DueDate, score = sub.Score };
 
             return Json(query.ToArray());
@@ -166,14 +165,32 @@ namespace LMS.Controllers
                 aID = v.aID;
             }
 
+            if (aID == 0)
+            {
+                return Json(new { success = false });
+            }
+
             try
             {
-                Submission newSub = new Submission();
-                newSub.AId = aID;
-                newSub.Student = uid;
-                newSub.Time = DateTime.Now;
-                newSub.StudentSolution = contents;
-                db.Submissions.Add(newSub);
+                var existingSubmission = db.Submissions
+                    .FirstOrDefault(s => s.AId == aID && s.Student == uid);
+
+                if (existingSubmission != null)
+                {
+                    existingSubmission.Time = DateTime.Now;
+                    existingSubmission.StudentSolution = contents;
+                }
+                else
+                {
+                    Submission newSub = new Submission();
+                    newSub.AId = aID;
+                    newSub.Student = uid;
+                    newSub.Time = DateTime.Now;
+                    newSub.StudentSolution = contents;
+                    newSub.Score = 0;
+                    db.Submissions.Add(newSub);
+                }
+
                 db.SaveChanges();
 
                 return Json(new { success = true });
@@ -252,7 +269,7 @@ namespace LMS.Controllers
 
             if (query.ToArray().Length == 0)
             {
-                gpa = 0.0;
+                return Json(new { gpa = 0.0 });
             }
             else
             {
@@ -301,11 +318,10 @@ namespace LMS.Controllers
                                 totalGradePoints += 0.0;
                                 break;
                         }
-
-                        totalGradePoints *= 4;
                     }
                 }
 
+                totalGradePoints *= 4;
                 gpa = totalGradePoints/totalHours;
             }
 
@@ -316,7 +332,5 @@ namespace LMS.Controllers
 
     }
 }
-
-
 
 

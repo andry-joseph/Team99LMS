@@ -53,11 +53,16 @@ namespace LMS.Controllers
         /// <returns>The JSON array</returns>
         public IActionResult GetCatalog()
         {            
-            var query = from c in db.Courses
-                            join d in db.Departments on c.Department equals d.Abbreviation into cd
-                            from z in cd.DefaultIfEmpty()
-                            select new {subject = z.Abbreviation, dname = z.DName, cname = c.CName, number = c.CNum};
-
+            var query = db.Departments
+                .Select(d => new
+                {
+                    subject = d.Abbreviation,
+                    dname = d.DName,
+                    courses = db.Courses
+                        .Where(c => c.Department == d.Abbreviation)
+                        .Select(c => new { number = c.CNum, cname = c.CName })
+                        .ToArray()
+                });
 
             return Json(query.ToArray());
         }
@@ -104,19 +109,23 @@ namespace LMS.Controllers
         /// <returns>The assignment contents</returns>
         public IActionResult GetAssignmentContents(string subject, int num, string season, int year, string category, string asgname)
         {            
-
-            var query = from c in db.Classes
+            var content = ( from c in db.Classes
                             join cr in db.Courses on c.CrId equals cr.CrId into ccr
                             from x in ccr.DefaultIfEmpty()
                             join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
                             from y in xac.DefaultIfEmpty()
                             join a in db.Assignments on y.AcId equals a.AcId into ya
                             from z in ya.DefaultIfEmpty()
-                            where x.Department == subject && x.CNum == num && c.Semester == season && c.Year == year && y.CatName == category && z.AName == asgname
-                            select new {content = z.Instructions};
+                            where x.Department == subject
+                            && x.CNum == num
+                            && c.Semester == season
+                            && c.Year == year
+                            && y.CatName == category
+                            && z.AName == asgname
+                            select z.Instructions ).FirstOrDefault();
 
 
-            return Content(query.ToString());
+            return Content(content ?? "");
         }
 
 
@@ -136,20 +145,25 @@ namespace LMS.Controllers
         /// <returns>The submission text</returns>
         public IActionResult GetSubmissionText(string subject, int num, string season, int year, string category, string asgname, string uid)
         {            
-            var query = from c in db.Classes
+            var content = ( from c in db.Classes
                             join cr in db.Courses on c.CrId equals cr.CrId into ccr
                             from x in ccr.DefaultIfEmpty()
                             join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
                             from y in xac.DefaultIfEmpty()
                             join a in db.Assignments on y.AcId equals a.AcId into ya
                             from z in ya.DefaultIfEmpty()
-                            join s in db.Submissions on  z.AId equals s.AId into sz
+                            join s in db.Submissions.Where(s => s.Student == uid) on z.AId equals s.AId into sz
                             from w in sz.DefaultIfEmpty()
-                            where x.Department == subject && x.CNum == num && c.Semester == season && c.Year == year && y.CatName == category && z.AName == asgname && w.Student == uid
-                            select new {content = w.StudentSolution};
+                            where x.Department == subject
+                            && x.CNum == num
+                            && c.Semester == season
+                            && c.Year == year
+                            && y.CatName == category
+                            && z.AName == asgname
+                            select w == null ? "" : w.StudentSolution ).FirstOrDefault();
 
 
-            return Content(query.ToString());
+            return Content(content ?? "");
         }
 
 
@@ -171,16 +185,71 @@ namespace LMS.Controllers
         /// </returns>
         public IActionResult GetUser(string uid)
         {     
-             var query = from students in db.Students 
-                            join p in db.Professors on students.UId equals p.UId into ps
-                            from profStu in ps.DefaultIfEmpty()
-                            join a in db.Administrators on profStu.UId equals a.UId into psa
-                            from people in psa.DefaultIfEmpty()
-                            join d1 in db.Departments on students.Major equals d1.Abbreviation into dept1 
-                            from dept2 in dept1.DefaultIfEmpty()
-                            join d2 in db.Departments on profStu.Department equals d2.Abbreviation into dept3
-                            from dept in dept3.DefaultIfEmpty()
-                            select new {fname =  people.FirstName, lname = people.LastName, uid = people.UId, department = dept.DName == null ? "" : dept.DName};
+            var student = ( from s in db.Students
+                            join d in db.Departments on s.Major equals d.Abbreviation into sd
+                            from dept in sd.DefaultIfEmpty()
+                            where s.UId == uid
+                            select new
+                            {
+                                s.FirstName,
+                                s.LastName,
+                                s.UId,
+                                Department = dept == null ? "" : dept.DName
+                            } ).FirstOrDefault();
+
+            if (student != null)
+            {
+                return Json(new
+                {
+                    fname = student.FirstName,
+                    lname = student.LastName,
+                    uid = student.UId,
+                    department = student.Department
+                });
+            }
+
+            var professor = ( from p in db.Professors
+                              join d in db.Departments on p.Department equals d.Abbreviation into pd
+                              from dept in pd.DefaultIfEmpty()
+                              where p.UId == uid
+                              select new
+                              {
+                                  p.FirstName,
+                                  p.LastName,
+                                  p.UId,
+                                  Department = dept == null ? "" : dept.DName
+                              } ).FirstOrDefault();
+
+            if (professor != null)
+            {
+                return Json(new
+                {
+                    fname = professor.FirstName,
+                    lname = professor.LastName,
+                    uid = professor.UId,
+                    department = professor.Department
+                });
+            }
+
+            var administrator = db.Administrators
+                .Where(a => a.UId == uid)
+                .Select(a => new
+                {
+                    a.FirstName,
+                    a.LastName,
+                    a.UId
+                })
+                .FirstOrDefault();
+
+            if (administrator != null)
+            {
+                return Json(new
+                {
+                    fname = administrator.FirstName,
+                    lname = administrator.LastName,
+                    uid = administrator.UId
+                });
+            }
 
             return Json(new { success = false });
         }
@@ -189,4 +258,3 @@ namespace LMS.Controllers
         /*******End code to modify********/
     }
 }
-
