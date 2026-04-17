@@ -118,21 +118,31 @@ namespace LMS_CustomIdentity.Controllers
         /// <param name="year">The year part of the semester for the class the assignment belongs to</param>
         /// <returns>The JSON array</returns>
         public IActionResult GetStudentsInClass(string subject, int num, string season, int year)
-        {
+{
+    var query = from c in db.Classes
+                join cr in db.Courses on c.CrId equals cr.CrId
+                join e in db.Enrollments on c.CId equals e.CId
+                join s in db.Students on e.Student equals s.UId
+                where cr.Department == subject 
+                   && cr.CNum == num 
+                   && c.Semester == season 
+                   && c.Year == year
+                select new 
+                { 
+                    fname = s.FirstName, 
+                    lname = s.LastName, 
+                    uid = s.UId, 
+                    dob = s.Dob, 
+                    grade = e.Grade 
+                };
 
-            var query = from c in db.Classes
-                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
-                            from x in ccr.DefaultIfEmpty()
-                            join e in db.Enrollments on c.CId equals e.CId into ec
-                            from enroll in ec.DefaultIfEmpty()
-                            join s in db.Students on enroll.Student equals s.UId into senroll
-                            from student in senroll.DefaultIfEmpty()
-                            where x.Department == subject && x.CNum == num && c.Semester == season && c.Year == year
-                            select new {fname = student.FirstName, lname = student.LastName, uid = student.UId, dob = student.Dob, grade = enroll.Grade};
+    if (query.Any())
+    {
+        return Json(query.ToArray());
+    }
 
-
-            return Json(query.ToArray());
-        }
+    return Json(Array.Empty<object>());
+}
 
 
 
@@ -183,20 +193,32 @@ namespace LMS_CustomIdentity.Controllers
         /// <param name="category">The name of the assignment category in the class</param>
         /// <returns>The JSON array</returns>
         public IActionResult GetAssignmentCategories(string subject, int num, string season, int year)
-        {
-            var query = from c in db.Classes
-                            join cr in db.Courses on c.CrId equals cr.CrId into ccr
-                            from x in ccr.DefaultIfEmpty()
-                            join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
-                            from assignCat in xac.DefaultIfEmpty()
-                            where x.Department == subject 
-                            && x.CNum == num 
-                            && c.Semester == season
-                            && c.Year == year 
-                            select new {name = assignCat.CatName, weight = assignCat.GrdWeight};
+{
+    var query = from c in db.Classes
+                join cr in db.Courses on c.CrId equals cr.CrId into ccr
+                from x in ccr.DefaultIfEmpty()
+                join ac in db.AssignmentCategories on c.CId equals ac.CId into xac
+                from assignCat in xac.DefaultIfEmpty()
+                where x.Department == subject 
+                   && x.CNum == num 
+                   && c.Semester == season
+                   && c.Year == year 
+                // Add the null-conditional check here:
+                select new { 
+                    name = assignCat == null ? "No Category" : assignCat.CatName, 
+                    weight = assignCat == null ? 0 : assignCat.GrdWeight 
+                };
 
-            return Json(query.ToArray());
-        }
+    // Filter out the "empty" results created by DefaultIfEmpty
+    var finalResult = query.Where(q => q.name != "No Category").ToArray();
+
+    if (finalResult.Any())
+    {
+        return Json(finalResult);
+    }
+
+    return Json(Array.Empty<object>());
+}
 
         /// <summary>
         /// Creates a new assignment category for the specified class.
@@ -233,7 +255,7 @@ namespace LMS_CustomIdentity.Controllers
                 AssignmentCategory cat = new AssignmentCategory();
                 cat.CatName = category;
                 cat.CId = cID;
-                cat.GrdWeight = (uint) catweight;
+                cat.GrdWeight = (uint)catweight;
                 db.AssignmentCategories.Add(cat);
                 db.SaveChanges();
                 return Json(new { success = true });
@@ -241,6 +263,9 @@ namespace LMS_CustomIdentity.Controllers
             catch
             {
                 return Json(new { success = false });
+
+
+
 
             }
 
