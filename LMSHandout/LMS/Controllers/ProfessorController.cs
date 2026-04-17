@@ -394,46 +394,47 @@ namespace LMS_CustomIdentity.Controllers
         /// <param name="score">The new score for the submission</param>
         /// <returns>A JSON object containing success = true/false</returns>
         public IActionResult GradeSubmission(string subject, int num, string season, int year, string category, string asgname, string uid, int score)
+{    var target = (from c in db.Classes
+                  join course in db.Courses on c.CrId equals course.CrId
+                  join assignCat in db.AssignmentCategories on c.CId equals assignCat.CId
+                  join assignment in db.Assignments on assignCat.AcId equals assignment.AcId
+                  where course.Department == subject
+                     && course.CNum == num
+                     && c.Semester == season
+                     && c.Year == year
+                     && assignCat.CatName == category
+                     && assignment.AName == asgname
+                  select new { c.CId, assignment.AId }).FirstOrDefault();
+
+    if (target == null)
+    {
+        return Json(new { success = false });
+    }
+
+    try
+    {
+        var submission = db.Submissions.FirstOrDefault(s => s.AId == target.AId && s.Student == uid);
+
+        if (submission == null)
         {
-            var target = ( from c in db.Classes
-                           join course in db.Courses on c.CrId equals course.CrId
-                           join assignCat in db.AssignmentCategories on c.CId equals assignCat.CId
-                           join assignment in db.Assignments on assignCat.AcId equals assignment.AcId
-                           where course.Department == subject
-                           && course.CNum == num
-                           && c.Semester == season
-                           && c.Year == year
-                           && assignCat.CatName == category
-                           && assignment.AName == asgname
-                           select new { c.CId, assignment.AId } ).FirstOrDefault();
-
-            if (target == null)
-            {
-                return Json(new { success = false });
-            }
-
-            try
-            {
-                var submission = db.Submissions.FirstOrDefault(s => s.AId == target.AId && s.Student == uid);
-
-                if (submission == null)
-                {
-                    return Json(new { success = false });
-                }
-
-                submission.Score = (uint) score;
-                UpdateStudentGrade(target.CId, uid);
-
-                db.SaveChanges();
-                return Json(new { success = true });
-
-            }catch
-            {
-                return Json(new { success = false });
-
-            }
+            return Json(new { success = false });
         }
 
+        submission.Score = (uint)score;
+        db.SaveChanges();
+
+        UpdateStudentGrade(target.CId, uid);
+        
+        db.SaveChanges(); 
+
+        return Json(new { success = true });
+    }
+    catch (Exception e)
+    {
+        System.Diagnostics.Debug.WriteLine(e.Message);
+        return Json(new { success = false });
+    }
+}
 
         /// <summary>
         /// Returns a JSON array of the classes taught by the specified professor
