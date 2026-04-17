@@ -430,9 +430,8 @@ namespace LMS_CustomIdentity.Controllers
                             join p in db.Professors on c.Professor equals p.UId into cp
                             from professor in cp.DefaultIfEmpty()
                             where professor.UId == uid
-                            select new {subject = courses.Department, number = courses.CNum, name = courses.CName, season = c.Semester, year = c.Year}; 
-
-
+                            select new { subject = courses.Department, number = courses.CNum, name = courses.CName, season = c.Semester, year = c.Year };
+                        
             return Json(query.ToArray());
         }
      
