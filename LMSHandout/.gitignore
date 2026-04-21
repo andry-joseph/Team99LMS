@@ -1,0 +1,12 @@
+# --- Build Outputs ---
+[Bb]in/
+[Oo]bj/
+
+# --- IDE Configs ---
+.vscode/
+.vs/
+.DS_Store
+
+# --- User specific files ---
+*.user
+*.suo

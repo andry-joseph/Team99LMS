@@ -1,31 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Stuff\\School\\Spring 2026\\CS 5530 Database Systems\\Team99LMS\\LMSHandout\\LMS\\LMS.csproj": {}
+    "/Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/LMS.csproj": {}
   },
   "projects": {
-    "c:\\Stuff\\School\\Spring 2026\\CS 5530 Database Systems\\Team99LMS\\LMSHandout\\LMS\\LMS.csproj": {
+    "/Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/LMS.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Stuff\\School\\Spring 2026\\CS 5530 Database Systems\\Team99LMS\\LMSHandout\\LMS\\LMS.csproj",
+        "projectUniqueName": "/Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/LMS.csproj",
         "projectName": "LMS",
-        "projectPath": "c:\\Stuff\\School\\Spring 2026\\CS 5530 Database Systems\\Team99LMS\\LMSHandout\\LMS\\LMS.csproj",
-        "packagesPath": "C:\\Users\\emili\\.nuget\\packages\\",
-        "outputPath": "c:\\Stuff\\School\\Spring 2026\\CS 5530 Database Systems\\Team99LMS\\LMSHandout\\LMS\\obj\\",
+        "projectPath": "/Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/LMS.csproj",
+        "packagesPath": "/Users/andryjoseph/.nuget/packages/",
+        "outputPath": "/Users/andryjoseph/Documents/University of Utah/Spring 2026/CS 5530/Project/Team99LMS/LMSHandout/LMS/obj/",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\emili\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/Users/andryjoseph/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -44,7 +39,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net9.0": {
@@ -100,7 +95,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.311/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
